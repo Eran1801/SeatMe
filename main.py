@@ -1,3 +1,4 @@
+import asyncio
 import tkinter
 from tkinter import *
 from tkinter import messagebox
@@ -5,6 +6,8 @@ import xlrd
 
 
 def main_function():
+    global icon, bg, win
+
     win = tkinter.Tk()
     win.title("Wedding")
 
@@ -21,12 +24,12 @@ def main_function():
     win.geometry(f'{app_width}x{app_height}+{int(x)}+{int(y)}')
 
     # set the icon of the app
-    icon = PhotoImage(file="ring_icon.png")
+    icon = PhotoImage(file="files/icon/ring_icon.png")
     win.iconphoto(False, icon)
 
     # set a background image on all of the window
     # Add image file
-    bg = PhotoImage(file="background_win.png")
+    bg = PhotoImage(file="files/background/background_win.png")
 
     # Create Canvas
     canvas1 = Canvas(win, width=app_width, height=app_height)
@@ -49,9 +52,11 @@ def main_window(win):
 
     data_label = Label(win, text="6.7.22", font="SuezOne 15 bold")
     data_label.place(relx=0.0, rely=1.0, anchor='sw')
+    data_label.config(bg="#FFFFFF")
 
     place_name_label = Label(win, text="אולמי קאסטלו", font="SuezOne 15 bold")
     place_name_label.place(relx=1, rely=1, anchor='se')
+    place_name_label.config(bg="#FFFFFF")
 
     message_telephone = Label(win, text="הכנס את מספר הטלפון שלך ולחץ על הכפתור למטה ",
                               font="SuezOne 13 bold", bg="#FFFFFF")
@@ -64,12 +69,17 @@ def main_window(win):
     # a function that extract the data from excel file
     data_dict = extract_data()
 
-    button_start = Button(win, text="מצא את השולחן שלי", font="SuezOne 20 bold",
-                          command=lambda: find_table(input_telephone.get(), input_telephone, data_dict))
+    button_start = Button(win, text="מצא את השולחן שלי", font="SuezOne 20 bold",command=lambda :find_table(input_telephone.get(), input_telephone, data_dict))
+
+    # If you press enter or press the button
+    # win.bind('<Return>', lambda event: find_table(input_telephone.get(), input_telephone, data_dict))
+
     button_start.place(relx=0.5, rely=0.8, anchor='center')
 
 
 def find_table(input_tele_str, input_telephone, data_dict):
+    global full_name, number_approve, table_number
+
     input_telephone.delete(0, END)
     telephone_guest = input_tele_str
     # check input for numbers only and in the right length
@@ -79,14 +89,56 @@ def find_table(input_tele_str, input_telephone, data_dict):
         messagebox.showwarning("weeding", "מספר הטלפון קצר מדי, נסה שוב")
 
     full_name = data_dict[telephone_guest][0]
-    partner_name = data_dict[telephone_guest][1]
     number_of_invites = data_dict[telephone_guest][2]
     number_approve = data_dict[telephone_guest][3]
     table_number = data_dict[telephone_guest][4]
 
     if number_of_invites == 1:
-        # TODO: https://www.youtube.com/watch?v=tpwu5Zb64lQ CUSTOM MessageBox
-        messagebox.showinfo("Wedding", f"שלום {full_name} מספר השולחן שלך הוא: {table_number}.\n")
+        custom_messagebox()
+    elif number_of_invites > 1:
+        custom_messagebox()
+
+
+def custom_messagebox():
+    global bg_, message_win
+
+    message_win = Toplevel(win)
+    message_win.title("Wedding")
+
+    # Set the screen in the middle
+    screen_width = message_win.winfo_screenwidth()
+    screen_height = message_win.winfo_screenheight()
+
+    x = (screen_width / 2) - (250 / 2)
+    y = (screen_height / 2) - (150 / 2)
+
+    message_win.geometry(f'{350}x{200}+{int(x)}+{int(y)}')
+
+    # icon is a global variable
+    message_win.iconphoto(False, icon)
+
+    # set a background image on all of the window
+    # Add image file
+    bg_ = PhotoImage(file="files/background/flower.png")
+
+    # Create Canvas
+    canvas1 = Canvas(message_win, width=250, height=150)
+
+    canvas1.pack(fill="both", expand=True)
+
+    # Display image
+    canvas1.create_image(45, 1, image=bg_, anchor="center")
+
+    if number_approve == 1:
+        message_1 = f" .שלום {full_name}, מספר השולחן שלך הוא {table_number}\n" \
+                    f".תעשו חיים ושמרו על עצמכם, קארין ואופק"
+        label = Label(message_win, text=message_1, font="SuezOne 10 bold")
+        label.place(relx=0.5, rely=0.5, anchor='center')
+    else:
+        message_2 = f" .שלום {full_name}, את/ה ו+{number_approve - 1} המוזמנים שאיתך יושבים בשולחן {table_number}\n" \
+                    f".תעשו חיים ושמרו על עצמכם, קארין ואופק"
+        label_2 = Label(message_win, text=message_2, font="SuezOne 10 bold")
+        label_2.place(relx=0.5, rely=0.5, anchor='center')
 
 
 def extract_data() -> dict:
@@ -102,7 +154,7 @@ def extract_data() -> dict:
     dict_guest = {}
 
     # dealing with the excel file
-    path_excel = "weeding.xlsx"
+    path_excel = "files/excel/weeding.xlsx"
     excel_workbook = xlrd.open_workbook(path_excel)
     excel_worksheet = excel_workbook.sheet_by_index(0)
 
